@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Paramètres du projet</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 15px;
+      }
+      label {
+        font-weight: bold;
+        display: block;
+        margin-top: 10px;
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 10px;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+      .required-field::after {
+        content: " *";
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Paramètres du projet</h2>
+    <form id="formProjet">
+      <label for="nom_projet" class="required-field">Nom du projet :</label>
+      <input type="text" id="nom_projet" name="nom_projet" required />
+
+      <label for="date_creation">Date de création :</label>
+      <input type="date" id="date_creation" name="date_creation" />
+
+      <label for="adresse_projet">Adresse du projet :</label>
+      <input type="text" id="adresse_projet" name="adresse_projet" />
+
+      <label for="reference_projet">Référence du projet :</label>
+      <input type="text" id="reference_projet" name="reference_projet" />
+
+      <label for="temp_ext" class="required-field"
+        >Température extérieure de base (°C) :</label
+      >
+      <input
+        type="number"
+        id="temp_ext"
+        name="temp_ext"
+        step="0.1"
+        min="-30"
+        max="10"
+        value="-5"
+        required
+        title="Température extérieure de référence pour les calculs thermiques"
+      />
+
+      <label for="coef_securite">Coefficient de sécurité (%) :</label>
+      <input
+        type="number"
+        id="coef_securite"
+        name="coef_securite"
+        min="0"
+        max="30"
+        step="0.1"
+        value="15"
+      />
+
+      <label for="temp_fluide_depart">Température fluide départ (°C) :</label>
+      <input
+        type="number"
+        id="temp_fluide_depart"
+        name="temp_fluide_depart"
+        min="30"
+        max="60"
+        step="0.1"
+        value="45"
+      />
+
+      <label for="temp_fluide_retour">Température fluide retour (°C) :</label>
+      <input
+        type="number"
+        id="temp_fluide_retour"
+        name="temp_fluide_retour"
+        min="25"
+        max="50"
+        step="0.1"
+        value="35"
+      />
+
+      <label for="choix_tuyau">Choix du tuyau :</label>
+      <select id="choix_tuyau" name="choix_tuyau">
+        <option value="PERT Ø12">PERT Ø12</option>
+        <option value="PERT Ø16" selected>PERT Ø16</option>
+        <option value="PERT Ø17">PERT Ø17</option>
+        <option value="PERT Ø20">PERT Ø20</option>
+        <option value="Multicouche Ø16">Multicouche Ø16</option>
+        <option value="Multicouche Ø20">Multicouche Ø20</option>
+      </select>
+
+      <button type="submit">Enregistrer les paramètres</button>
+    </form>
+
+    <script>
+      const form = document.getElementById("formProjet");
+
+      // Fonction pour charger les paramètres existants
+      function charger_params(data) {
+        if (!data) {
+          // Valeurs par défaut si aucune donnée n'existe
+          data = {
+            temp_ext: -5,
+            coef_securite: 15,
+            temp_fluide_depart: 45,
+            temp_fluide_retour: 35,
+            choix_tuyau: "PERT Ø16",
+          };
+        }
+
+        const champs = [
+          "nom_projet",
+          "date_creation",
+          "adresse_projet",
+          "reference_projet",
+          "temp_ext",
+          "coef_securite",
+          "temp_fluide_depart",
+          "temp_fluide_retour",
+          "choix_tuyau",
+        ];
+
+        champs.forEach((name) => {
+          if (data[name] !== undefined && form.elements[name]) {
+            form.elements[name].value = data[name];
+          }
+        });
+      }
+
+      // Gestion de la soumission du formulaire
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        // Validation supplémentaire
+        if (parseFloat(form.elements["temp_ext"].value) > 10) {
+          alert(
+            "La température extérieure semble trop élevée. Vérifiez la valeur."
+          );
+          return;
+        }
+
+        const data = {};
+        const champs = [
+          "nom_projet",
+          "date_creation",
+          "adresse_projet",
+          "reference_projet",
+          "temp_ext",
+          "coef_securite",
+          "temp_fluide_depart",
+          "temp_fluide_retour",
+          "choix_tuyau",
+        ];
+
+        champs.forEach((name) => {
+          data[name] = form.elements[name].value;
+        });
+
+        if (window.sketchup) {
+          window.sketchup.enregistrer_params(JSON.stringify(data));
+        } else {
+          console.log("Données à enregistrer:", data);
+          alert("En mode test - données non envoyées à SketchUp");
+        }
+      });
+
+      // Chargement initial
+      if (window.sketchup) {
+        window.sketchup.charger_params("");
+      } else {
+        // Mode de développement - charge des valeurs par défaut
+        charger_params({});
+      }
+    </script>
+  </body>
+</html>

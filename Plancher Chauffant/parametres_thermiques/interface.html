@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plancher Chauffant - Dimensionnement Complet</title>
+    <style>
+      :root {
+        --primary: #3498db;
+        --secondary: #2ecc71;
+        --danger: #e74c3c;
+        --light: #ecf0f1;
+        --dark: #2c3e50;
+        --border: #bdc3c7;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f7fa;
+        color: var(--dark);
+        line-height: 1.6;
+        padding: 20px;
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .app-container {
+        display: flex;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        gap: 25px;
+      }
+
+      .params-column {
+        flex: 1;
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .results-column {
+        width: 380px;
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        flex-direction: column;
+      }
+
+      h1,
+      h2,
+      h3 {
+        color: var(--dark);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .section {
+        margin-bottom: 30px;
+      }
+
+      .form-group {
+        margin-bottom: 18px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--dark);
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 15px;
+        transition: all 0.3s;
+      }
+
+      input:focus,
+      select:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      }
+
+      input[readonly] {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+      }
+
+      button {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        padding: 12px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 15px;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        background-color: #95a5a6;
+        cursor: not-allowed;
+      }
+
+      .btn-block {
+        display: block;
+        width: 100%;
+      }
+
+      .thermal-results {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+      }
+
+      .result-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .result-label {
+        font-weight: 500;
+      }
+
+      .result-value {
+        font-weight: 700;
+      }
+
+      .total-row {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 2px solid var(--border);
+        font-size: 16px;
+      }
+
+      .loops-panel {
+        margin-top: auto;
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+      }
+
+      .loops-results {
+        background-color: #e8f8f5;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+      }
+
+      .loading {
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 1200px) {
+        .app-container {
+          flex-direction: column;
+        }
+        .results-column {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Colonne Paramètres -->
+      <div class="params-column">
+        <h1>Paramètres du Plancher Chauffant</h1>
+
+        <!-- Section Pièce -->
+        <div class="section">
+          <h2>Caractéristiques de la Pièce</h2>
+          <div class="form-group">
+            <label for="room-name">Nom de la pièce</label>
+            <input type="text" id="room-name" readonly />
+          </div>
+          <div class="form-group">
+            <label for="room-area">Surface au sol (m²)</label>
+            <input type="number" id="room-area" step="0.01" min="0" readonly />
+          </div>
+          <div class="form-group">
+            <label for="room-height">Hauteur sous plafond (m)</label>
+            <input
+              type="number"
+              id="room-height"
+              step="0.1"
+              min="2"
+              max="5"
+              value="2.5"
+            />
+          </div>
+        </div>
+
+        <!-- Section Enveloppe Thermique -->
+        <div class="section">
+          <h2>Enveloppe Thermique</h2>
+          <div class="form-group">
+            <label for="wall-u">Coefficient U des murs (W/m²K)</label>
+            <input type="number" id="wall-u" step="0.01" min="0" value="0.35" />
+          </div>
+          <div class="form-group">
+            <label for="wall-area">Surface des murs extérieurs (m²)</label>
+            <input type="number" id="wall-area" step="0.1" min="0" value="0" />
+          </div>
+          <div class="form-group">
+            <label for="window-u">Coefficient U des vitrages (W/m²K)</label>
+            <input type="number" id="window-u" step="0.1" min="0" value="2.8" />
+          </div>
+          <div class="form-group">
+            <label for="window-area">Surface des vitrages (m²)</label>
+            <input
+              type="number"
+              id="window-area"
+              step="0.1"
+              min="0"
+              value="0"
+            />
+          </div>
+          <div class="form-group">
+            <label for="floor-u">Coefficient U du plancher (W/m²K)</label>
+            <input type="number" id="floor-u" step="0.01" min="0" value="0.3" />
+          </div>
+        </div>
+
+        <!-- Section Paramètres Hydrauliques -->
+        <div class="section">
+          <h2>Paramètres Hydrauliques</h2>
+          <div class="form-group">
+            <label for="flow-temp">Température départ (°C)</label>
+            <input
+              type="number"
+              id="flow-temp"
+              step="0.5"
+              min="30"
+              max="60"
+              value="45"
+            />
+          </div>
+          <div class="form-group">
+            <label for="return-temp">Température retour (°C)</label>
+            <input
+              type="number"
+              id="return-temp"
+              step="0.5"
+              min="25"
+              max="50"
+              value="35"
+            />
+          </div>
+          <div class="form-group">
+            <label for="pipe-type">Type de tuyau</label>
+            <select id="pipe-type">
+              <option value="pex-a">PEX-A Ø16mm</option>
+              <option value="pex-b">PEX-B Ø16mm</option>
+              <option value="multilayer">Multicouche Ø16mm</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="save-btn" class="btn btn-block" onclick="saveSettings()">
+          Enregistrer tous les paramètres
+        </button>
+      </div>
+
+      <!-- Colonne Résultats -->
+      <div class="results-column">
+        <h2>Résultats de Calcul</h2>
+
+        <!-- Résultats Thermiques -->
+        <div class="thermal-results">
+          <h3>Déperditions Thermiques</h3>
+          <div class="result-row">
+            <span class="result-label">Par les murs:</span>
+            <span id="wall-loss" class="result-value">0.0 W</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">Par les vitrages:</span>
+            <span id="window-loss" class="result-value">0.0 W</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label">Par ventilation:</span>
+            <span id="ventilation-loss" class="result-value">0.0 W</span>
+          </div>
+          <div class="result-row total-row">
+            <span class="result-label">Total déperditions:</span>
+            <span id="total-loss" class="result-value">0.0 W</span>
+          </div>
+          <div class="result-row" style="color: var(--danger)">
+            <span class="result-label">Avec sécurité (15%):</span>
+            <span id="total-with-safety" class="result-value">0.0 W</span>
+          </div>
+        </div>
+
+        <!-- Configuration des Boucles -->
+        <div class="loops-panel">
+          <h3>Configuration des Boucles</h3>
+          <div class="form-group">
+            <label for="loop-spacing">Pas des boucles (cm)</label>
+            <input
+              type="number"
+              id="loop-spacing"
+              min="10"
+              max="30"
+              value="15"
+              step="1"
+            />
+          </div>
+          <div class="form-group">
+            <label for="max-length">Longueur max. par boucle (m)</label>
+            <input
+              type="number"
+              id="max-length"
+              min="50"
+              max="150"
+              value="100"
+              step="5"
+            />
+          </div>
+
+          <div class="loops-results">
+            <div class="result-row">
+              <span class="result-label">Nombre de boucles:</span>
+              <span id="loop-count" class="result-value">0</span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Longueur par boucle:</span>
+              <span id="loop-length" class="result-value">0.0 m</span>
+            </div>
+          </div>
+
+          <button
+            id="draw-loops-btn"
+            class="btn btn-block"
+            onclick="drawLoops()"
+          >
+            <span id="loop-icon">⎔</span> Tracer les Boucles
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Variables globales
+      const state = {
+        outdoorTemp: -5, // Valeur par défaut synchronisée avec interface_projet.html
+        room: {
+          name: "",
+          area: 0,
+          height: 2.5,
+        },
+        thermal: {
+          walls: { u: 0.35, area: 0 },
+          windows: { u: 2.8, area: 0 },
+          floor: { u: 0.3 },
+          ventilation: 0.5,
+          wallLoss: 0,
+          windowLoss: 0,
+          ventilationLoss: 0,
+          totalLoss: 0,
+          totalWithSafety: 0,
+        },
+        hydraulic: {
+          flowTemp: 45,
+          returnTemp: 35,
+          pipeType: "pex-a",
+        },
+        loops: {
+          spacing: 15,
+          maxLength: 100,
+          count: 0,
+          length: 0,
+        },
+      };
+
+      // Initialisation
+      document.addEventListener("DOMContentLoaded", function () {
+        loadInitialData();
+        setupEventListeners();
+        calculateAll();
+      });
+
+      // Chargement des données initiales
+      function loadInitialData() {
+        if (window.sketchup) {
+          window.sketchup.loadInitialData(function (data) {
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.outdoorTemp !== undefined) {
+                state.outdoorTemp = parseFloat(parsed.outdoorTemp);
+              }
+              Object.assign(state, parsed);
+              updateUI();
+            } catch (e) {
+              console.error("Erreur de parsing:", e);
+              alert("Erreur de chargement des données");
+            }
+          });
+        }
+      }
+
+      // Configuration des écouteurs d'événements
+      function setupEventListeners() {
+        // Thermique
+        document
+          .getElementById("wall-u")
+          .addEventListener("input", function () {
+            state.thermal.walls.u = parseFloat(this.value) || 0;
+            calculateThermal();
+          });
+
+        document
+          .getElementById("window-u")
+          .addEventListener("input", function () {
+            state.thermal.windows.u = parseFloat(this.value) || 0;
+            calculateThermal();
+          });
+
+        // Hydraulique
+        document
+          .getElementById("flow-temp")
+          .addEventListener("input", function () {
+            state.hydraulic.flowTemp = parseFloat(this.value) || 45;
+          });
+
+        // Boucles
+        document
+          .getElementById("loop-spacing")
+          .addEventListener("input", function () {
+            state.loops.spacing = parseFloat(this.value) || 15;
+            calculateLoops();
+          });
+
+        document
+          .getElementById("max-length")
+          .addEventListener("input", function () {
+            state.loops.maxLength = parseFloat(this.value) || 100;
+            calculateLoops();
+          });
+      }
+
+      // Calculs thermiques complets
+      function calculateThermal() {
+        if (typeof state.outdoorTemp !== "number" || isNaN(state.outdoorTemp)) {
+          console.error(
+            "Température extérieure non valide :",
+            state.outdoorTemp
+          );
+          return;
+        }
+
+        // Température intérieure souhaitée
+        const targetTemp = 20; // °C
+
+        // Calcul des déperditions (simplifié)
+        const wallLoss =
+          state.thermal.walls.u *
+          state.thermal.walls.area *
+          (targetTemp - state.outdoorTemp);
+        const windowLoss =
+          state.thermal.windows.u *
+          state.thermal.windows.area *
+          (targetTemp - state.outdoorTemp);
+        const ventilationLoss =
+          0.34 *
+          state.room.area *
+          state.room.height *
+          state.thermal.ventilation *
+          (targetTemp - state.outdoorTemp);
+
+        // Mise à jour du state
+        state.thermal.wallLoss = wallLoss;
+        state.thermal.windowLoss = windowLoss;
+        state.thermal.ventilationLoss = ventilationLoss;
+        state.thermal.totalLoss = wallLoss + windowLoss + ventilationLoss;
+        state.thermal.totalWithSafety = state.thermal.totalLoss * 1.15;
+
+        updateResultsUI();
+      }
+
+      // Calcul des boucles
+      function calculateLoops() {
+        if (!state.room.area) return;
+
+        const spacingMeters = state.loops.spacing / 100;
+        const roomSide = Math.sqrt(state.room.area);
+        const lineCount = Math.ceil(roomSide / spacingMeters);
+        const totalLength = lineCount * roomSide * 2; // Aller-retour
+
+        state.loops.count = Math.ceil(totalLength / state.loops.maxLength);
+        state.loops.length = totalLength / state.loops.count;
+
+        updateLoopsUI();
+      }
+
+      // Tracé des boucles dans SketchUp
+      function drawLoops() {
+        const btn = document.getElementById("draw-loops-btn");
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading">⏳</span> Traçage en cours...';
+
+        if (window.sketchup) {
+          window.sketchup.drawHeatingLoops(
+            JSON.stringify({
+              spacing: state.loops.spacing,
+              maxLength: state.loops.maxLength,
+              pipeType: state.hydraulic.pipeType,
+              roomName: state.room.name,
+            }),
+            function (success) {
+              if (success) {
+                btn.innerHTML = "<span>✓</span> Boucles tracées";
+                setTimeout(() => {
+                  btn.innerHTML = "<span>⎔</span> Tracer les Boucles";
+                  btn.disabled = false;
+                }, 2000);
+              } else {
+                btn.innerHTML = "<span>⚠</span> Erreur";
+                btn.disabled = false;
+                alert("Erreur lors du tracé des boucles");
+              }
+            }
+          );
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = "<span>⎔</span> Tracer les Boucles";
+        }
+      }
+
+      // Sauvegarde des paramètres
+      function saveSettings() {
+        if (window.sketchup) {
+          window.sketchup.saveSettings(
+            JSON.stringify(state),
+            function (result) {
+              alert(
+                result ? "Paramètres sauvegardés !" : "Erreur de sauvegarde"
+              );
+            }
+          );
+        }
+      }
+
+      // Mise à jour de l'interface
+      function updateUI() {
+        // Données pièce
+        document.getElementById("room-name").value = state.room.name;
+        document.getElementById("room-area").value = state.room.area.toFixed(2);
+        document.getElementById("room-height").value = state.room.height;
+
+        // Thermique
+        document.getElementById("wall-u").value = state.thermal.walls.u;
+        document.getElementById("wall-area").value = state.thermal.walls.area;
+        document.getElementById("window-u").value = state.thermal.windows.u;
+        document.getElementById("window-area").value =
+          state.thermal.windows.area;
+        document.getElementById("floor-u").value = state.thermal.floor.u;
+
+        // Hydraulique
+        document.getElementById("flow-temp").value = state.hydraulic.flowTemp;
+        document.getElementById("return-temp").value =
+          state.hydraulic.returnTemp;
+        document.getElementById("pipe-type").value = state.hydraulic.pipeType;
+
+        // Boucles
+        document.getElementById("loop-spacing").value = state.loops.spacing;
+        document.getElementById("max-length").value = state.loops.maxLength;
+
+        // Calculs
+        calculateAll();
+      }
+
+      function updateResultsUI() {
+        document.getElementById("wall-loss").textContent =
+          state.thermal.wallLoss.toFixed(1) + " W";
+        document.getElementById("window-loss").textContent =
+          state.thermal.windowLoss.toFixed(1) + " W";
+        document.getElementById("ventilation-loss").textContent =
+          state.thermal.ventilationLoss.toFixed(1) + " W";
+        document.getElementById("total-loss").textContent =
+          state.thermal.totalLoss.toFixed(1) + " W";
+        document.getElementById("total-with-safety").textContent =
+          state.thermal.totalWithSafety.toFixed(1) + " W";
+      }
+
+      function updateLoopsUI() {
+        document.getElementById("loop-count").textContent = state.loops.count;
+        document.getElementById("loop-length").textContent =
+          state.loops.length.toFixed(1) + " m";
+      }
+
+      function calculateAll() {
+        calculateThermal();
+        calculateLoops();
+      }
+    </script>
+  </body>
+</html>
